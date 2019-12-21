@@ -37,14 +37,19 @@ type TCPClientHandler struct {
 }
 
 // NewTCPClientHandler allocates a new TCPClientHandler.
-func NewTCPClientHandler(address string, rack int, slot int) *TCPClientHandler {
+func NewTCPClientHandler(address string, plcType string, rack int, slot int) *TCPClientHandler {
 	h := &TCPClientHandler{}
 	h.Address = address
 	h.Timeout = tcpTimeout
 	h.IdleTimeout = tcpIdleTimeout
 	h.ConnectionType = connectionTypePG // Connect to the PLC as a PG
 	remoteTSAP := uint16(h.ConnectionType)<<8 + (uint16(rack) * 0x20) + uint16(slot)
-	h.setConnectionParameters(address, 0x0100, remoteTSAP)
+	localTSAP := 0x0100
+	if plcType == "S200" {
+		remoteTSAP = 0x4d57
+		localTSAP = 0x4d57
+	}
+	h.setConnectionParameters(address, localTSAP, remoteTSAP)
 	return h
 }
 
@@ -197,11 +202,10 @@ func (mb *tcpTransporter) connect() error {
 func (mb *tcpTransporter) isoConnect() error {
 	msg := make([]byte, len(isoConnectionRequestTelegram))
 	copy(msg, isoConnectionRequestTelegram)
-
-	msg[16] = 0x4d
-	msg[17] = 0x57
-	msg[20] = 0x4d
-	msg[21] = 0x57
+	msg[16] = mb.localTSAPHigh
+	msg[17] = mb.localTSAPLow
+	msg[20] = mb.remoteTSAPHigh
+	msg[21] = mb.remoteTSAPLow
 
 	// Sends the connection request telegram
 	response, err := mb.Send(msg)
