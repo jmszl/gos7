@@ -44,18 +44,18 @@ func NewTCPClientHandler(address string, plcType string, rack int, slot int) *TC
 	h.IdleTimeout = tcpIdleTimeout
 	h.ConnectionType = connectionTypePG // Connect to the PLC as a PG
 	remoteTSAP := uint16(h.ConnectionType)<<8 + (uint16(rack) * 0x20) + uint16(slot)
-	localTSAP := 0x0100
+	localTSAP := uint16(0x0100)
 	if plcType == "S200" {
-		remoteTSAP = 0x4d57
-		localTSAP = 0x4d57
+		remoteTSAP = uint16(0x4d57)
+		localTSAP = uint16(0x4d57)
 	}
 	h.setConnectionParameters(address, localTSAP, remoteTSAP)
 	return h
 }
 
 //TCPClient creator for a TCP client with address, rack and slot, implement from interface client
-func TCPClient(address string, rack int, slot int) Client {
-	handler := NewTCPClientHandler(address, rack, slot)
+func TCPClient(address string, plcType string, rack int, slot int) Client {
+	handler := NewTCPClientHandler(address, plcType, rack, slot)
 	return NewClient(handler)
 }
 
