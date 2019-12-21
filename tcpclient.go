@@ -197,10 +197,10 @@ func (mb *tcpTransporter) connect() error {
 func (mb *tcpTransporter) isoConnect() error {
 	msg := make([]byte, len(isoConnectionRequestTelegram))
 	copy(msg, isoConnectionRequestTelegram)
-	msg[16] = mb.localTSAPHigh
-	msg[17] = mb.localTSAPLow
-	msg[20] = mb.remoteTSAPHigh
-	msg[21] = mb.remoteTSAPLow
+	msg[16] = 0x4d
+	msg[17] = 0x57
+	msg[20] = 0x4d
+	msg[21] = 0x57
 
 	// Sends the connection request telegram
 	response, err := mb.Send(msg)
