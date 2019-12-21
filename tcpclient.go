@@ -198,7 +198,6 @@ func (mb *tcpTransporter) isoConnect() error {
 	msg := make([]byte, len(isoConnectionRequestTelegram))
 	copy(msg, isoConnectionRequestTelegram)
 
-	msg[13] = 8
 	msg[16] = 0x4d
 	msg[17] = 0x57
 	msg[20] = 0x4d
