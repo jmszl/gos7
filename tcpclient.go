@@ -37,7 +37,7 @@ type TCPClientHandler struct {
 }
 
 // NewTCPClientHandler allocates a new TCPClientHandler.
-func NewTCPClientHandler(address string, localTsap, remoteTsap int) *TCPClientHandler {
+func NewTCPClientHandler(address string, port int, localTsap, remoteTsap int) *TCPClientHandler {
 	h := &TCPClientHandler{}
 	h.Address = address
 	h.Timeout = tcpTimeout
@@ -45,13 +45,13 @@ func NewTCPClientHandler(address string, localTsap, remoteTsap int) *TCPClientHa
 	h.ConnectionType = connectionTypePG // Connect to the PLC as a PG
 	remoteTSAP := uint16(remoteTsap)
 	localTSAP := uint16(localTsap)
-	h.setConnectionParameters(address, localTSAP, remoteTSAP)
+	h.setConnectionParameters(address, port, localTSAP, remoteTSAP)
 	return h
 }
 
 //TCPClient creator for a TCP client with address, rack and slot, implement from interface client
 func TCPClient(address string, localTsap, remoteTsap int) Client {
-	handler := NewTCPClientHandler(address, localTsap, remoteTsap)
+	handler := NewTCPClientHandler(address, 102, localTsap, remoteTsap)
 	return NewClient(handler)
 }
 
@@ -88,10 +88,10 @@ type tcpTransporter struct {
 	PDULength int
 }
 
-func (mb *tcpTransporter) setConnectionParameters(address string, localTSAP uint16, remoteTSAP uint16) {
+func (mb *tcpTransporter) setConnectionParameters(address string, port int, localTSAP uint16, remoteTSAP uint16) {
 	locTSAP := localTSAP & 0x0000FFFF
 	remTSAP := remoteTSAP & 0x0000FFFF
-	mb.Address = address + ":" + strconv.Itoa(isoTCP) //ip:102
+	mb.Address = address + ":" + strconv.Itoa(port) //ip:102
 	mb.localTSAPHigh = byte(locTSAP >> 8)
 	mb.localTSAPLow = byte(locTSAP & 0x00FF)
 	mb.remoteTSAPHigh = byte(remTSAP >> 8)
