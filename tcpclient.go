@@ -5,6 +5,7 @@ package gos7
 // of the BSD license. See the LICENSE file for details.
 import (
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -110,6 +111,11 @@ func (mb *tcpTransporter) Send(request []byte) (response []byte, err error) {
 	if mb.Timeout > 0 {
 		timeout = mb.lastActivity.Add(mb.Timeout)
 	}
+
+	if mb.conn == nil {
+		return nil, errors.New("conn为Nil")
+	}
+
 	if err = mb.conn.SetDeadline(timeout); err != nil {
 		return
 	}

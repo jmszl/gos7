@@ -16,7 +16,7 @@ const (
 	s7areapa = 0x82 //process outputs
 	s7areamk = 0x83 //Merkers
 	s7areadb = 0x84 //DB
-	s7areact = 0x1C //counters
+	s7areact = 0x1E //counters
 	s7areatm = 0x1D //timers
 
 	// Word Length
@@ -28,7 +28,7 @@ const (
 	s7wldword   = 0x06 //Double Word (32 bit)
 	s7wldint    = 0x07
 	s7wlreal    = 0x08 //Real (32 bit float)
-	s7wlcounter = 0x1C //Counter (16 bit)
+	s7wlcounter = 0x1E //Counter (16 bit)
 	s7wltimer   = 0x1D //Timer (16 bit)
 
 	// PLC Status
@@ -139,8 +139,15 @@ func (mb *client) AGReadCT(start int, amount int, buffer []byte) (err error) {
 	sbuffer := make([]byte, amount*2)
 	err = mb.readArea(s7areact, 0, start, amount, s7wlcounter, sbuffer)
 	if err == nil {
-		for c := 0; c < amount; c++ {
-			buffer[c] = byte(uint(sbuffer[c*2+1])<<8 + uint(sbuffer[c*2]))
+		//for c := 0; c < amount; c++ {
+		//	buffer[c] = byte(uint(sbuffer[c*2+1])<<8 + uint(sbuffer[c*2]))
+		//}
+		if len(buffer) == 2 && len(sbuffer) > 2 {
+			buffer[0] = sbuffer[0]
+			buffer[1] = sbuffer[1]
+		}
+		if len(buffer) == 1 && len(sbuffer) > 1 {
+			buffer[0] = sbuffer[1]
 		}
 	}
 	return err
@@ -235,10 +242,12 @@ func (mb *client) readArea(area int, dbNumber int, start int, amount int, wordLe
 				} else {
 					//copy response to buffer
 					copy(buffer[offset:offset+sizeRequested], response.Data[25:25+sizeRequested])
+					if area == 0x1E {
+						copy(buffer[offset:offset+sizeRequested], response.Data[26:26+sizeRequested])
+					}
 					offset += sizeRequested
 				}
 			}
-
 		}
 		totElements -= numElements
 		start += numElements * wordSize
@@ -458,7 +467,6 @@ func (mb *client) Read(variable string) (value interface{}, err error) {
 			err = fmt.Errorf("error when parsing db area")
 			return
 		}
-
 	}
 	return
 }
@@ -466,6 +474,10 @@ func (mb *client) Read(variable string) (value interface{}, err error) {
 //send the package of a pdu request and a pdu response, check for response error and verify the package
 func (mb *client) send(request *ProtocolDataUnit) (response *ProtocolDataUnit, err error) {
 	dataResponse, err := mb.transporter.Send(request.Data)
+
+	if err != nil {
+		return nil, err
+	}
 
 	if err = mb.packager.Verify(request.Data, dataResponse); err != nil {
 		return
